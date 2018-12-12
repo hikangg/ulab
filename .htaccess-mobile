@@ -1,0 +1,15 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . /index.php [L]
+
+
+    #RewriteCond %{HTTP_USER_AGENT} iphone|ipad|android|blackberry [NC]
+    #RewriteRule . http://ulab.com/index.php [L]
+
+    #RewriteCond %{HTTP_USER_AGENT} !(iphone|ipad|android|blackberry) [NC]
+    #RewriteRule ^$ http://ulab-mobile.vinova.sg/ [L]
+
+</IfModule>

@@ -1,0 +1,17 @@
+subprojects {
+    afterEvaluate {
+        if (getPlugins().hasPlugin('android') ||
+                getPlugins().hasPlugin('android-library')) {
+            println "Overriding lint settings in " + name
+            configure(android.lintOptions) {
+                abortOnError true
+                checkReleaseBuilds true
+                ignore "RtlSymmetry", "RtlHardcoded", "SpUsage", "ContentDescription", \
+                       "InvalidPackage", "RtlEnabled", "InefficientWeight", "RelativeOverlap"
+                error "UnusedResources", "HardcodedText", "IconDipSize", \
+                      "StringFormatInvalid", "IconDuplicatesConfig", "TypographyEllipsis", \
+                      "ManifestOrder"
+            }
+        }
+    }
+}

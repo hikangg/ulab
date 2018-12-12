@@ -1,0 +1,92 @@
+apply plugin: 'checkstyle'
+check.dependsOn 'checkstylePrep'
+check.dependsOn 'checkstyle'
+
+task checkstylePrep << {
+    def config_directory = "${project.rootDir}/build"
+    mkdir(config_directory)
+    def config_path = config_directory + "/checkstyle_configuration.xml"
+    print "downloading checkstyle config"
+    print ">> " + config_path
+    new File(config_path).withOutputStream { os ->
+        new URL("http://android.infullmobile.com/checkstyle.xml?token=aslkjd0djqw9dokmasld091dkl")
+                .withInputStream { is ->
+            os << is
+        }
+    }
+}
+
+task checkstyle(type: Checkstyle) {
+    def config_path = "${project.rootDir}/build/checkstyle_configuration.xml"
+    def config = file(config_path)
+    configFile config
+    source 'src'
+    include '**/*.java'
+    exclude '**/gen/**'
+    classpath = files()
+    shouldRunAfter "checkstylePrep"
+}
+
+ext.getFabricTeam = { ->
+    def team = project.hasProperty('fabricTeam') ? fabricTeam : "defaultinternal"
+    println "Fabric team is set to $team"
+    return team
+}
+
+ext.getChangelogPath = { defaultValue ->
+    def path = project.hasProperty('changelogPath') ? changelogPath : defaultValue
+    println "Changelog path is set to $path"
+    return path
+}
+
+ext.loadKeystorePropertiesFromPath = { defaultValue ->
+    def path = project.hasProperty('keystorePropPath') ? keystorePropPath : defaultValue
+    println "Keystore properties path is set to $path"
+    def Properties keyProps = new Properties()
+    keyProps.load(new FileInputStream(file(path)))
+    return keyProps
+}
+
+ext.createSigningConfigFromFile = { String defaultValue ->
+    def String path = project.hasProperty('keystorePropPath') ? keystorePropPath : defaultValue;
+    println "Keystore properties path is set to $path";
+    def propFile = new File(path);
+    def propDir = propFile.getParentFile().getAbsolutePath();
+    def propDirFile = new File(propDir);
+
+    def Properties keyProps = new Properties()
+    keyProps.load(new FileInputStream(propFile));
+    def String propFileRelativePath = keyProps['key.store'];
+
+    def keystoreFile = new File(propDirFile, propFileRelativePath);
+    println "Keystore absolute path is ${keystoreFile.getAbsolutePath()}";
+    def ret = {
+        keyAlias keyProps['key.alias'];
+        storeFile keystoreFile;
+        storePassword keyProps['key.store.password'];
+        keyPassword keyProps['key.alias.password'];
+    }
+    return ret;
+}
+
+ext.appendVersionNameVersionCode = { variant, defaultConfig ->
+    variant.outputs.each { output ->
+        if (output.zipAlign) {
+            def file = output.outputFile
+            def fileName = file.name
+            if (file.name.contains(defaultConfig.versionName) == false && !file.name.contains("unaligned")) {
+                fileName = fileName.replace(".apk", "-" + defaultConfig.versionName + ".apk")
+            }
+            //noinspection GroovyAssignabilityCheck
+            output.outputFile = new File(file.parent, fileName)
+        }
+
+        def file = output.packageApplication.outputFile
+        def fileName = file.name
+        if (file.name.contains(defaultConfig.versionName) == false && !file.name.contains("unaligned")) {
+            fileName = fileName.replace(".apk", "-" + defaultConfig.versionName + ".apk")
+        }
+        //noinspection GroovyAssignabilityCheck
+        output.packageApplication.outputFile = new File(file.parent, fileName)
+    }
+}
